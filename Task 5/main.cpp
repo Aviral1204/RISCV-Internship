@@ -1,0 +1,68 @@
+
+#include <ch32v00x.h>
+#include <debug.h>
+#define NVIC_PriorityGroup_2 ((uint32_t)0x500)
+
+void GPIO_Config(void) {
+
+GPIO_InitTypeDef GPIO_InitStructure = {0};
+
+RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+// Configure echo and trigger pins
+
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_4;
+
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+
+GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+// Configure trigger and LED pins
+
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
+
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+
+GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+}
+
+int main(void) {
+
+uint8_t echo_status = 0;
+
+NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+SystemCoreClockUpdate();
+Delay_Init();
+GPIO_Config();
+while(1) {
+
+// Trigger ultrasonic sensor
+
+GPIO_WriteBit(GPIOD, GPIO_Pin_2, Bit_SET);
+
+Delay_Ms(10); // Trigger pulse width
+
+GPIO_WriteBit(GPIOD, GPIO_Pin_2, Bit_RESET);
+
+echo_status = GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_4);
+
+if (echo_status == 1) {
+
+// Object detected, blink LED
+
+GPIO_WriteBit(GPIOD, GPIO_Pin_3, Bit_SET);
+
+Delay_Ms(2000); // LED on duration
+
+GPIO_WriteBit(GPIOD, GPIO_Pin_3, Bit_RESET);
+
+Delay_Ms(2000); // LED off duration
+
+}
+
+}
+
+}
